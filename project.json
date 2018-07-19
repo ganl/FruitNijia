@@ -23,6 +23,7 @@
         "src/over.js",
         "src/ui.js",
         "src/game.js",
+        "src/light.js",
         "src/welcome.js",
         "src/app.js"
     ]
