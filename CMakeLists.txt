@@ -1,6 +1,8 @@
 #/****************************************************************************
-# Copyright (c) 2014 Chukong Technologies Inc.
-# 
+# Copyright (c) 2013 cocos2d-x.org
+# Copyright (c) 2014 martell malone
+# Copyright (c) 2015-2017 Chukong Technologies Inc.
+#
 # http://www.cocos2d-x.org
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -22,293 +24,129 @@
 # THE SOFTWARE.
 # ****************************************************************************/
 
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.1)
 
-set(APP_NAME MyGame)
-project (${APP_NAME})
+set(APP_NAME TemplateJS)
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/frameworks/cocos2d-x/cmake/Modules/")
-include(CocosBuildHelpers)
+project(${APP_NAME})
 
-option(USE_CHIPMUNK "Use chipmunk for physics library" ON)
-option(DEBUG_MODE "Debug or release?" ON)
-option(BUILD_EXTENSIONS "Build extension library" ON)
-option(BUILD_EDITOR_SPINE "Build editor support for spine" ON)
-option(BUILD_EDITOR_COCOSTUDIO "Build editor support for cocostudio" ON)
-option(BUILD_EDITOR_COCOSBUILDER "Build editor support for cocosbuilder" ON)
-option(USE_BULLET "Use bullet for physics3d library" ON)
-option(USE_PREBUILT_LIBS "Use prebuilt libraries in external directory" ON)
+set(RUNTIME_SRC_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/frameworks/runtime-src)
+set(COCOS2DX_ROOT_PATH ${CMAKE_CURRENT_SOURCE_DIR}/frameworks/cocos2d-x)
+set(CMAKE_MODULE_PATH ${COCOS2DX_ROOT_PATH}/cmake/Modules/)
 
-
-if(DEBUG_MODE)
-  set(CMAKE_BUILD_TYPE DEBUG)
-else(DEBUG_MODE)
-  set(CMAKE_BUILD_TYPE RELEASE)
-endif(DEBUG_MODE)
-
-if(USE_BULLET)
-  add_definitions(-DCC_ENABLE_BULLET_INTEGRATION=1)
-  add_definitions(-DCC_USE_PHYSICS=1)
-endif(USE_BULLET)
-
-set(CMAKE_C_FLAGS_DEBUG "-DCOCOS2D_DEBUG=1")
-set(CMAKE_CXX_FLAGS_DEBUG ${CMAKE_C_FLAGS_DEBUG})
-
-if(WIN32)
-  ADD_DEFINITIONS (-D_USRDLL -DCOCOS2DXWIN32_EXPORTS -D_WINDOWS -DWIN32)
-
-  if(MSVC)
-    ADD_DEFINITIONS(-D_CRT_SECURE_NO_WARNINGS 
-					-D_SCL_SECURE_NO_WARNINGS 
-					-wd4251 -wd4244 -wd4334 
-					-wd4005 -wd4820 -wd4710
-					-wd4514 -wd4056 -wd4996 -wd4099)
-  else(MSVC)#MINGW
-  
-  endif(MSVC)
-elseif(APPLE)
-
-
-else()#Linux
-ADD_DEFINITIONS(-DLINUX -DCC_RESOURCE_FOLDER_LINUX="/")
+include(CocosBuildSet)
+if(NOT USE_COCOS_PREBUILT)
+    set(BUILD_JS_LIBS ON)
+    add_subdirectory(${COCOS2DX_ROOT_PATH}/cocos ${ENGINE_BINARY_PATH}/cocos/core)
 endif()
 
-
-if(NOT MSVC)# all gcc
-set(CMAKE_C_FLAGS_DEBUG "-g -Wall -DCOCOS2D_DEBUG=1")
-set(CMAKE_CXX_FLAGS_DEBUG ${CMAKE_C_FLAGS_DEBUG})
-set(CMAKE_C_FLAGS ${CMAKE_C_FLAGS} "-std=c99")
-set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-std=c++11")
+# script and source files info, not need to compile
+set(res_main_files
+    "${CMAKE_CURRENT_SOURCE_DIR}/main.js"
+    "${CMAKE_CURRENT_SOURCE_DIR}/project.json"
+    )
+set(res_res_folders
+    "${CMAKE_CURRENT_SOURCE_DIR}/res"
+    )
+set(res_src_folders
+    "${CMAKE_CURRENT_SOURCE_DIR}/src"
+    )
+set(res_script_folders
+    "${COCOS2DX_ROOT_PATH}/cocos/scripting/js-bindings/script"
+    )
+if(APPLE OR VS)
+    cocos_mark_multi_resources(res_main RES_TO "Resources" FILES ${res_main_files})
+    cocos_mark_multi_resources(res_res RES_TO "Resources/res" FOLDERS ${res_res_folders})
+    cocos_mark_multi_resources(res_src RES_TO "Resources/src" FOLDERS ${res_src_folders})
+    cocos_mark_multi_resources(res_script RES_TO "Resources/script" FOLDERS ${res_script_folders})
+    set(cc_common_res ${res_main} ${res_res} ${res_src} ${res_script})
 endif()
 
-if(MINGW)
-  add_definitions(-DGLEW_STATIC)
-endif()
+# record sources, headers
+set(GAME_SOURCE ${RUNTIME_SRC_ROOT}/Classes/AppDelegate.cpp)
+set(GAME_HEADER ${RUNTIME_SRC_ROOT}/Classes/AppDelegate.h)
 
-
-if(USE_CHIPMUNK)
-  message("Using chipmunk ...")
-  add_definitions(-DCC_ENABLE_CHIPMUNK_INTEGRATION=1)
-elseif(USE_BOX2D)
-  message("Using box2d ...")
-  add_definitions(-DCC_ENABLE_BOX2D_INTEGRATION=1)
-else(USE_CHIPMUNK)
-  message(FATAL_ERROR "Must choose a physics library.")
-endif(USE_CHIPMUNK)
-
-# architecture
-if ( CMAKE_SIZEOF_VOID_P EQUAL 8 )
-set(ARCH_DIR "64-bit")
-else()
-set(ARCH_DIR "32-bit")
-endif()
-
-if(WIN32) # Win32
-  set(PLATFORM_FOLDER win32)
-elseif(APPLE)# osx or ios
-  set(PLATFORM_FOLDER mac)
-else() # Assume Linux
-  set(PLATFORM_FOLDER linux)
-endif()
-
-set(COCOS_EXTERNAL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/frameworks/cocos2d-x/external)
-
-
+# sources need to compile info, include dirs and source files
 include_directories(
-  ${CMAKE_CURRENT_SOURCE_DIR}/frameworks/cocos2d-x/
-  ${CMAKE_CURRENT_SOURCE_DIR}/frameworks/cocos2d-x/cocos
-  ${CMAKE_CURRENT_SOURCE_DIR}/frameworks/cocos2d-x/cocos/base
-  ${CMAKE_CURRENT_SOURCE_DIR}/frameworks/cocos2d-x/cocos/2d
-  ${CMAKE_CURRENT_SOURCE_DIR}/frameworks/cocos2d-x/cocos/ui
-  ${CMAKE_CURRENT_SOURCE_DIR}/frameworks/cocos2d-x/cocos/audio/include
-  ${CMAKE_CURRENT_SOURCE_DIR}/frameworks/cocos2d-x/cocos/storage
-  ${CMAKE_CURRENT_SOURCE_DIR}/frameworks/cocos2d-x/cocos/network
-  ${CMAKE_CURRENT_SOURCE_DIR}/frameworks/cocos2d-x/cocos/platform
-  ${CMAKE_CURRENT_SOURCE_DIR}/frameworks/cocos2d-x/cocos/editor-support
-  ${CMAKE_CURRENT_SOURCE_DIR}/frameworks/cocos2d-x/cocos/editor-support/spine
-  ${CMAKE_CURRENT_SOURCE_DIR}/frameworks/cocos2d-x/cocos/editor-support/cocosbuilder
-  ${CMAKE_CURRENT_SOURCE_DIR}/frameworks/cocos2d-x/cocos/editor-support/cocostudio
-  ${CMAKE_CURRENT_SOURCE_DIR}/frameworks/cocos2d-x/deprecated
-  ${CMAKE_CURRENT_SOURCE_DIR}/frameworks/cocos2d-x/cocos/platform
-  ${CMAKE_CURRENT_SOURCE_DIR}/frameworks/cocos2d-x/extensions
-  ${CMAKE_CURRENT_SOURCE_DIR}/frameworks/cocos2d-x/external
-  ${CMAKE_CURRENT_SOURCE_DIR}/frameworks/cocos2d-x/external/chipmunk/include/chipmunk
-  ${CMAKE_CURRENT_SOURCE_DIR}/frameworks/cocos2d-x/external/spidermonkey/include/${PLATFORM_FOLDER}
-  ${CMAKE_CURRENT_SOURCE_DIR}/frameworks/cocos2d-x/cocos/scripting/js-bindings/auto
-  ${CMAKE_CURRENT_SOURCE_DIR}/frameworks/cocos2d-x/cocos/scripting/js-bindings/manual
+        ${RUNTIME_SRC_ROOT}/Classes
+        ${COCOS2DX_ROOT_PATH}/cocos/editor-support
+        ${COCOS2DX_ROOT_PATH}/external/spidermonkey/include/${PLATFORM_FOLDER}
 )
 
-link_directories(
-  ${CMAKE_CURRENT_SOURCE_DIR}/frameworks/cocos2d-x/external/spidermonkey/prebuilt/${PLATFORM_FOLDER}/${ARCH_DIR}
-)
-
-
-if(USE_PREBUILT_LIBS)
-  include(CocosUsePrebuiltLibs)
+if(ANDROID)
+    # change APP_NAME to the share library name for Android, it's value depend on AndroidManifest.xml
+    set(APP_NAME cocos2djs)
+    list(APPEND GAME_SOURCE ${RUNTIME_SRC_ROOT}/proj.android/app/jni/hellojavascript/main.cpp)
+elseif(LINUX)
+    list(APPEND GAME_SOURCE ${RUNTIME_SRC_ROOT}/proj.linux/main.cpp)
+elseif(WINDOWS)
+    set(WINDOWS_SRC ${RUNTIME_SRC_ROOT}/proj.win32/main.cpp)
+    list(APPEND WINDOWS_SRC ${RUNTIME_SRC_ROOT}/proj.win32/game.rc)
+    list(APPEND GAME_HEADER
+         ${RUNTIME_SRC_ROOT}/proj.win32/main.h
+         ${RUNTIME_SRC_ROOT}/proj.win32/resource.h
+         )
+    list(APPEND GAME_SOURCE ${WINDOWS_SRC} ${cc_common_res})
+elseif(APPLE)
+    if(IOS)
+        list(APPEND GAME_HEADER
+             ${RUNTIME_SRC_ROOT}/proj.ios_mac/ios/AppController.h
+             ${RUNTIME_SRC_ROOT}/proj.ios_mac/ios/RootViewController.h
+             )
+        set(APP_UI_RES
+            ${RUNTIME_SRC_ROOT}/proj.ios_mac/ios/LaunchScreen.storyboard
+            ${RUNTIME_SRC_ROOT}/proj.ios_mac/ios/LaunchScreenBackground.png
+            ${RUNTIME_SRC_ROOT}/proj.ios_mac/ios/Images.xcassets
+            )
+        list(APPEND GAME_SOURCE
+             ${RUNTIME_SRC_ROOT}/proj.ios_mac/ios/main.m
+             ${RUNTIME_SRC_ROOT}/proj.ios_mac/ios/AppController.mm
+             ${RUNTIME_SRC_ROOT}/proj.ios_mac/ios/RootViewController.mm
+             ${RUNTIME_SRC_ROOT}/proj.ios_mac/ios/Prefix.pch
+             ${APP_UI_RES}
+             )
+    elseif(MACOSX)
+        set(APP_UI_RES
+            ${RUNTIME_SRC_ROOT}/proj.ios_mac/mac/Icon.icns
+            ${RUNTIME_SRC_ROOT}/proj.ios_mac/mac/Info.plist
+            )
+        list(APPEND GAME_SOURCE
+             ${RUNTIME_SRC_ROOT}/proj.ios_mac/mac/main.cpp
+             ${RUNTIME_SRC_ROOT}/proj.ios_mac/mac/Prefix.pch
+             ${APP_UI_RES}
+             )
+    endif()
+    list(APPEND GAME_SOURCE ${cc_common_res})
 endif()
 
-# GLFW3 used on Mac, Windows and Linux desktop platforms
-if(LINUX OR MACOSX OR WINDOWS)
-  cocos_find_package(OpenGL OPENGL REQUIRED)
+set(APP_SRC ${GAME_HEADER} ${GAME_SOURCE})
 
-  if(LINUX OR WINDOWS)
-    cocos_find_package(GLEW GLEW REQUIRED)
-  endif()
+# mark app complie info and libs info
+cocos_build_app(${APP_NAME}
+                APP_SRC "${APP_SRC}"
+                DEPEND_COMMON_LIBS "jscocos2d" "cocos2d"
+                DEPEND_ANDROID_LIBS "cocos2d_android"
+                )
 
-  cocos_find_package(GLFW3 GLFW3 REQUIRED)
-  include_directories(${GLFW3_INCLUDE_DIRS})
-
-  if(LINUX)
-    set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
-    find_package(Threads REQUIRED)
-    set(THREADS_LIBRARIES ${CMAKE_THREAD_LIBS_INIT})
-
-    #cocos_find_package(FMODEX FMODEX REQUIRED)
-    cocos_find_package(Fontconfig FONTCONFIG REQUIRED)
-    cocos_find_package(GTK3 GTK3 REQUIRED)
-  endif()
-
-  if(WINDOWS)
-    cocos_find_package(Vorbis VORBIS REQUIRED)
-    cocos_find_package(MPG123 MPG123 REQUIRED)
-    cocos_find_package(OpenAL OPENAL REQUIRED)
-    # because FindOpenAL.cmake set include dir for '#include <al.h>' for portability (not for '#include <AL/al.h>'
-    set(OPENAL_DEFINITIONS "-DOPENAL_PLAIN_INCLUDES")
-  endif()
-endif(LINUX OR MACOSX OR WINDOWS)
-
-# Freetype required on all platforms
-cocos_find_package(Freetype FREETYPE REQUIRED)
-
-# WebP required if used
-if(USE_WEBP)
-  cocos_find_package(WebP WEBP REQUIRED)
-endif(USE_WEBP)
-
-# Chipmunk
-if(USE_CHIPMUNK)
-  cocos_find_package(Chipmunk CHIPMUNK REQUIRED)
-  add_definitions(-DCC_ENABLE_CHIPMUNK_INTEGRATION=1)
-  if(IOS OR MACOSX)
-    # without this chipmunk will try to use apple defined geometry types, that conflicts with cocos
-    add_definitions(-DCP_USE_CGPOINTS=0)
-  endif()
-else(USE_CHIPMUNK)
-  add_definitions(-DCC_USE_PHYSICS=0)
-endif(USE_CHIPMUNK)
-
-# Box2d (not prebuilded, exists as source)
-if(USE_BOX2D)
-  if(USE_PREBUILT_LIBS)
-    add_subdirectory(frameworks/cocos2d-x/external/Box2D)
-    set(Box2D_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/frameworks/js-bindings/cocos2d-x/external/box2d/include)
-    set(Box2D_LIBRARIES box2d)
-  else()
-    find_package(Box2D REQUIRED CONFIG)
-    # actually Box2D in next line is not a library, it is target exported from Box2DConfig.cmake
-    set(Box2D_LIBRARIES Box2D)
-  endif()
-  message(STATUS "Box2D include dirs: ${Box2D_INCLUDE_DIRS}")
-  add_definitions(-DCC_ENABLE_BOX2D_INTEGRATION=1)
-else()
-  add_definitions(-DCC_ENABLE_BOX2D_INTEGRATION=0)
-endif(USE_BOX2D)
-
-# Tinyxml2 (not prebuilded, exists as source)
-if(USE_PREBUILT_LIBS)
-  add_subdirectory(frameworks/cocos2d-x/external/tinyxml2)
-  set(TinyXML2_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/frameworks/cocos2d-x/external/tinyxml2)
-  set(TinyXML2_LIBRARIES tinyxml2)
-else()
-  cocos_find_package(TinyXML2 TinyXML2 REQUIRED)
+# mark app resources, resource will be copy auto after mark
+if(APPLE)
+    set_target_properties(${APP_NAME} PROPERTIES RESOURCE "${APP_UI_RES}")
+    if(MACOSX)
+        set_target_properties(${APP_NAME} PROPERTIES
+                              MACOSX_BUNDLE_INFO_PLIST "${RUNTIME_SRC_ROOT}/proj.ios_mac/mac/Info.plist"
+                              )
+    elseif(IOS)
+        cocos_pak_xcode(${APP_NAME} INFO_PLIST "iOSBundleInfo.plist.in")
+        set_xcode_property(${APP_NAME} ASSETCATALOG_COMPILER_APPICON_NAME "AppIcon")
+    endif()
+elseif(WINDOWS)
+    cocos_copy_target_dll(${APP_NAME} COPY_TO ${APP_BIN_DIR})
 endif()
-message(STATUS "TinyXML2 include dirs: ${TinyXML2_INCLUDE_DIRS}")
-
-# libjpeg
-cocos_find_package(JPEG JPEG REQUIRED)
-cocos_find_package(ZLIB ZLIB REQUIRED)
-
-# minizip (we try to migrate to minizip from https://github.com/nmoinvaz/minizip)
-# only msys2 currently provides package for this variant, all other
-# dists have packages from zlib, thats very old for us.
-# moreover our embedded version modified to quick provide
-# functionality needed by cocos.
-if(USE_PREBUILT_LIBS OR NOT MINGW)
-  add_subdirectory(frameworks/cocos2d-x/external/unzip)
-  set(MINIZIP_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/frameworks/cocos2d-x/external/unzip)
-  set(MINIZIP_LIBRARIES unzip)
-  message(STATUS "MINIZIP include dirs: ${MINIZIP_INCLUDE_DIRS}")
-else()
-  cocos_find_package(MINIZIP MINIZIP REQUIRED)
-  # double check that we have needed functions
-  include(CheckLibraryExists)
-  check_library_exists(${MINIZIP_LIBRARIES} "unzGoToFirstFile2" "" MINIZIP_HAS_GOTOFIRSTFILE2)
-  if(NOT MINIZIP_HAS_GOTOFIRSTFILE2)
-    message(FATAL_ERROR "Minizip library on you system very old. Please use recent version from https://github.com/nmoinvaz/minizip or enable USE_PREBUILT_LIBS")
-  endif()
-  add_definitions(-DMINIZIP_FROM_SYSTEM)
+# copy resource on linux or WINDOWS
+if(LINUX OR WINDOWS)
+    cocos_copy_target_res(${APP_NAME} COPY_TO ${APP_RES_DIR} FILES ${res_main_files})
+    cocos_copy_target_res(${APP_NAME} COPY_TO ${APP_RES_DIR}/res FOLDERS ${res_res_folders})
+    cocos_copy_target_res(${APP_NAME} COPY_TO ${APP_RES_DIR}/src FOLDERS ${res_src_folders})
+    cocos_copy_target_res(${APP_NAME} COPY_TO ${APP_RES_DIR}/script FOLDERS ${res_script_folders})
 endif()
-
-cocos_find_package(PNG PNG REQUIRED)
-cocos_find_package(TIFF TIFF REQUIRED)
-cocos_find_package(WEBSOCKETS WEBSOCKETS REQUIRED)
-cocos_find_package(CURL CURL REQUIRED)
-
-
-add_subdirectory(frameworks/cocos2d-x/external/flatbuffers)
-set(FLATBUFFERS_INCLUDE_DIRS frameworks/cocos2d-x/external)
-message(STATUS "Flatbuffers include dirs: ${FLATBUFFERS_INCLUDE_DIRS}")
-
-
-# build xxhash
-add_subdirectory(frameworks/cocos2d-x/external/xxhash)
-include_directories(frameworks/cocos2d-x/external/xxhash)
-
-#buid recast
-add_subdirectory(frameworks/cocos2d-x/external/recast)
-
-set(GAME_SRC
-  frameworks/runtime-src/proj.linux/main.cpp
-  frameworks/runtime-src/Classes/AppDelegate.cpp
-)
-
-# cocos2d
-add_subdirectory(frameworks/cocos2d-x/cocos)
-
-#jsbindings library
-add_subdirectory(frameworks/cocos2d-x/cocos/scripting/js-bindings)
-
-# add the executable
-add_executable(${APP_NAME}
-  ${GAME_SRC}
-)
-
-target_link_libraries(${APP_NAME}
-  jscocos2d
-  cocos2d
-  recast
-)
-
-if(USE_BULLET)
-  add_subdirectory(frameworks/cocos2d-x/external/bullet)
-  target_link_libraries(${APP_NAME} bullet)
-endif()
-
-set(APP_BIN_DIR "${CMAKE_BINARY_DIR}/bin")
-
-set_target_properties(${APP_NAME} PROPERTIES
-     RUNTIME_OUTPUT_DIRECTORY  "${APP_BIN_DIR}")
-
-pre_build(${APP_NAME}
-  COMMAND ${CMAKE_COMMAND} -E remove_directory ${APP_BIN_DIR}/script
-  COMMAND ${CMAKE_COMMAND} -E remove_directory ${APP_BIN_DIR}/res
-  COMMAND ${CMAKE_COMMAND} -E remove_directory ${APP_BIN_DIR}/src
-  COMMAND ${CMAKE_COMMAND} -E remove ${APP_BIN_DIR}/*.js
-  COMMAND ${CMAKE_COMMAND} -E remove ${APP_BIN_DIR}/*.json
-  COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/res ${APP_BIN_DIR}/res
-  COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/src ${APP_BIN_DIR}/src
-  COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/frameworks/cocos2d-x/cocos/scripting/js-bindings/script ${APP_BIN_DIR}/script
-  COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/main.js ${APP_BIN_DIR}/main.js
-  COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/project.json ${APP_BIN_DIR}/project.json
-)
 

@@ -15,19 +15,17 @@ var OverLayer = cc.Layer.extend({
 
 	init: function() {
 		//注册鼠标事件监听器
-		if('mouse' in cc.sys.capabilities) {
-			cc.eventManager.addListener({
-				event: cc.EventListener.MOUSE,
-				onMouseDown: this._onMouseDown.bind(this)
-			}, this);
-		};
+		cc.eventManager.addListener({
+			event: cc.EventListener.TOUCH_ONE_BY_ONE,
+            onTouchBegan: this._onTouchBegan.bind(this)
+		}, this);
 	},
 
 	_init: function() {
 		this.init();
 	},
 
-	_onMouseDown: function(event) {
+	_onTouchBegan: function(event) {
 		this.scene.removeChild(this, true);
 		this.scene._init();
 	}

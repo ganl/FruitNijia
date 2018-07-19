@@ -14,8 +14,10 @@ var res = {
     shadow: "res/images/shadow.png",
     knife: "res/images/knife.png",
     game_over: "res/images/game-over.png"
-    };
+}
+
 var g_resources = [];
+
 var fruits = {
     peach: "res/images/fruit/peach.png",
     peach_1: "res/images/fruit/peach-1.png",
@@ -75,7 +77,8 @@ for(var k in plists) {
 
 for (var key in ui_res) {
     g_resources.push(ui_res[key]);
-};
+}
+
 //sounds resources
 for(var s in sounds) {
     g_resources.push(sounds[s]);

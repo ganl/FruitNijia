@@ -49,6 +49,7 @@ var WelcomLayer = cc.Layer.extend({
 	prex: 0,
 	prey: 0,
 	fly: [],
+    touchListener:null,
 	ctor: function(scene) {
 		this._super();
 		this.init();
@@ -149,42 +150,85 @@ var WelcomLayer = cc.Layer.extend({
 
 		this.knife = new Knife(0.3, 3, 10, cc.color(50, 220, 255), "res/images/knife.png", this);
 		this.addChild(this.knife);
-		//添加事件
-		var THIS = this;
-		if('mouse' in cc.sys.capabilities) {
-			cc.eventManager.addListener({
-				event: cc.EventListener.MOUSE,
-				onMouseDown: function(event) {
-					console.log("*********");
-					THIS.isDown = true;
-					THIS.prex = event.getLocationX();
-					THIS.prey = event.getLocationY();
-					THIS.knife.setPosition(event.getLocation());
-					THIS.knife.setParticleInitalPositon(event.getLocationX(), event.getLocationY());
-				},
-				onMouseMove: function(event) {
-					if(THIS.isDown) {
-						THIS.knife.setPosition(event.getLocation());
-						THIS.knife.setParticlePosition(event.getLocationX(), event.getLocationY());
-						//检查是否切中西瓜
-						var dis = Math.sqrt((event.getLocationX() - THIS.prex) * (event.getLocationX() - THIS.prex)
-							+ (event.getLocationY() - THIS.prey) * (event.getLocationY() - THIS.prey));
-						if(dis >= 30) {
-							THIS.checkCollision(event.getLocationX(), event.getLocationY(), THIS.prex, THIS.prey);
-							THIS.prex = event.getLocationX();
-							THIS.prey = event.getLocationY();
-						}
-					}
-				},
-				onMouseUp: function(event) {
-					THIS.isDown = false;
-					THIS.knife.reset(); //清空所有片段
-					THIS.knife.setStartingPositionInitialized(false); //将初始位置改为还未设定
-				}
-			}, this);
-		};
+
+		this.addTouchEventListenser();
 		
 	},
+    addTouchEventListenser:function(){
+        var that = this;
+        //touch event
+        // this.touchListener = cc.EventListener.create({
+        //     event: cc.EventListener.TOUCH_ONE_BY_ONE,
+        //     // When "swallow touches" is true, then returning 'true' from the onTouchBegan method will "swallow" the touch event, preventing other listeners from using it.
+        //     swallowTouches: true,
+        //     //onTouchBegan event callback function
+        //     onTouchBegan: function (touch, event) {
+        //         var pos = touch.getLocation();
+        //         var target = event.getCurrentTarget();
+        //         if ( cc.rectContainsPoint(target.getBoundingBox(),pos)) {
+        //             target.removeTouchEventListenser();
+        //             //响应精灵点中
+        //             cc.log("pos.x="+pos.x+",pos.y="+pos.y);
+        //
+        //             target.stopAllActions();
+        //
+        //             var ac = target.disappearAction;
+        //             var seqAc = cc.Sequence.create( ac, cc.CallFunc.create(function () {
+        //                 cc.log("callfun........");
+        //                 target.getParent().addScore();
+        //                 target.getParent().removeSushiByindex(target.index - 1);
+        //                 target.removeFromParent();
+        //
+        //             },target) );
+        //
+        //             target.runAction(seqAc);
+        //
+        //             return true;
+        //         }
+        //         return false;
+        //     }
+        // });
+
+        //添加事件
+        this.touchListener = cc.EventListener.create({
+            event: cc.EventListener.TOUCH_ONE_BY_ONE,
+            swallowTouches: true,
+            onTouchBegan: function(touch, event) {
+                that.isDown = true;
+
+                var pos = touch.getLocation();
+                that.prex = pos.x;
+                that.prey = pos.y;
+                that.knife.setPosition(pos);
+                that.knife.setParticleInitalPositon(pos.x, pos.y);
+                return true; // need return
+            },
+            onTouchMoved: function(touch, event) {
+                if(that.isDown) {
+                    that.knife.setPosition(touch.getLocation());
+                    that.knife.setParticlePosition(touch.getLocationX(), touch.getLocationY());
+                    //检查是否切中西瓜
+                    var dis = Math.sqrt((touch.getLocationX() - that.prex) * (touch.getLocationX() - that.prex)
+                        + (touch.getLocationY() - that.prey) * (touch.getLocationY() - that.prey));
+                    if(dis >= 30) {
+                        that.checkCollision(touch.getLocationX(), touch.getLocationY(), that.prex, that.prey);
+                        that.prex = touch.getLocationX();
+                        that.prey = touch.getLocationY();
+                    }
+                }
+            },
+            onTouchEnded: function(touch, event) {
+                that.isDown = false;
+                that.knife.reset(); //清空所有片段
+                that.knife.setStartingPositionInitialized(false); //将初始位置改为还未设定
+            }
+        });
+
+        cc.eventManager.addListener(this.touchListener,this);
+    },
+    removeTouchEventListener:function(){
+        cc.eventManager.removeListener(this.touchListener);
+    },
 	_init: function() {
 		this.isDown = false,
 	    this.sandia_ =  0,

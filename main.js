@@ -53,20 +53,41 @@
  */
 
 cc.game.onStart = function(){
-    if(!cc.sys.isNative && document.getElementById("cocosLoading")) //If referenced loading.js, please remove it
+    var sys = cc.sys;
+    if(!sys.isNative && document.getElementById("cocosLoading")) //If referenced loading.js, please remove it
         document.body.removeChild(document.getElementById("cocosLoading"));
 
+    // Disable auto full screen on baidu and wechat, you might also want to eliminate sys.BROWSER_TYPE_MOBILE_QQ
+    if (sys.isMobile &&
+        sys.browserType !== sys.BROWSER_TYPE_BAIDU &&
+        sys.browserType !== sys.BROWSER_TYPE_WECHAT) {
+        cc.view.enableAutoFullScreen(true);
+    }
+
     // Pass true to enable retina display, on Android disabled by default to improve performance
-    cc.view.enableRetina(cc.sys.os === cc.sys.OS_IOS ? true : false);
+    // cc.view.enableRetina(cc.sys.os === cc.sys.OS_IOS ? true : false);
+
     // Adjust viewport meta
     cc.view.adjustViewPort(true);
+
+    // Uncomment the following line to set a fixed orientation for your game
+    // cc.view.setOrientation(cc.ORIENTATION_PORTRAIT);
+
     // Setup the resolution policy and design resolution size
-    cc.view.setDesignResolutionSize(640, 480, cc.ResolutionPolicy.SHOW_ALL);
+    cc.view.setDesignResolutionSize(640, 480, cc.ResolutionPolicy.FIXED_WIDTH);
+
     // Instead of set design resolution, you can also set the real pixel resolution size
     // Uncomment the following line and delete the previous line.
     // cc.view.setRealPixelResolution(960, 640, cc.ResolutionPolicy.SHOW_ALL);
+
     // The game will be resized when browser size change
     cc.view.resizeWithBrowserSize(true);
+
+    cc.view.setResizeCallback(function() {
+        // 做任何你所需要的游戏内容层面的适配操作
+        // 比如说，你可以针对用户的移动设备方向来决定所要应用的适配模式
+    });
+
     //load resources
     cc.LoaderScene.preload(g_resources, function () {
         cc.director.runScene(new GameScene());

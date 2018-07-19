@@ -5,7 +5,7 @@ var Sound = {
 	menu_effect: null,
 	//切中炸弹
 	playBoom: function() {
-		cc.audioEngine.playEffect("res/sound/boom.mp3", false);
+		cc.audioEngine.playEffect(sounds.boom, false);
 	},
 
 	//扔出水果
@@ -14,7 +14,7 @@ var Sound = {
 		if(this.throw_effect) {
 			cc.audioEngine.stopEffect(this.throw_effect);
 		}
-		this.throw_effect = cc.audioEngine.playEffect("res/sound/throw.mp3", false);
+		this.throw_effect = cc.audioEngine.playEffect(sounds.throwd, false);
 	},
 
 	//切中水果
@@ -23,17 +23,17 @@ var Sound = {
 		if(this.splatter_effect) {
 			cc.audioEngine.stopEffect(this.splatter_effect);
 		}
-		this.splatter_effect = cc.audioEngine.playEffect("res/sound/splatter.mp3", false);
+		this.splatter_effect = cc.audioEngine.playEffect(sounds.splatter, false);
 	},
 
 	//Game over
 	playOver: function() {
-		cc.audioEngine.playEffect("res/sound/over.mp3");
+		cc.audioEngine.playEffect(sounds.over);
 	},
 
 	//menu
 	playMenu: function() {
-		this.menu_effect = cc.audioEngine.playMusic("res/sound/menu.mp3", true);
+		this.menu_effect = cc.audioEngine.playMusic(sounds.menu, true);
 	},
 	
 	//stop menu
@@ -43,6 +43,6 @@ var Sound = {
 
 	//start
 	playStart: function() {
-		cc.audioEngine.playEffect("res/sound/start.mp3");
+		cc.audioEngine.playEffect(sounds.start, false);
 	}
 }
