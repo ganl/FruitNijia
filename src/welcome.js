@@ -50,6 +50,7 @@ var WelcomLayer = cc.Layer.extend({
 	prey: 0,
 	fly: [],
     touchListener:null,
+	// testLayer: null,
 	ctor: function(scene) {
 		this._super();
 		this.init();
@@ -249,6 +250,12 @@ var WelcomLayer = cc.Layer.extend({
 		if(Collision.checkCollision(x1, y1, x2, y2, this.newGameSprite.x, this.newGameSprite.y, Constant.FRUITS[4].r)) {
 			this.doHit(Collision.getKnifeRota(x1, y1, x2, y2, 4, this.sandia.rotation));
 		}
+		// else {
+		// 	if (this.testLayer == null) {
+         //        this.testLayer = new LightLayer(this.newGameSprite)
+         //        this.addChild(this.testLayer)
+		// 	}
+		// }
 	},
 	//remove()...
 	remove: function() {

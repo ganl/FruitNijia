@@ -5,7 +5,6 @@ var Randomer = {
     count: 0,
     getCount: function (max) {
         this.count = 1 + Math.floor((Math.random() * max));
-
     },
     getTypes: function (max) {
         this.getCount(max);
@@ -14,7 +13,6 @@ var Randomer = {
         for (var i = 0; i < this.count; i++) {
             types.push(Math.floor(Math.random() * Constant.COUNT));
         }
-        ;
         return types;
     }
 };
@@ -189,7 +187,6 @@ var GameLayer = cc.Layer.extend({
             var fruit = new Fruit();
             this.cachePool.push(fruit);
         }
-        ;
     },
     //初始化存储已切中的水果的队列
     initHites: function () {
@@ -220,7 +217,13 @@ var GameLayer = cc.Layer.extend({
         this.score++;
         this.setScore(this.score);
         this.updateLevel(this.score);
+        console.log(fruit.id)
         if (!fruit) {
+            return;
+        }
+        if(fruit.id == 5){ //切中 boom
+            this.isFailed = true;
+            this.boomLight(fruit);
             return;
         }
         this.removeChild(fruit);
@@ -297,7 +300,6 @@ var GameLayer = cc.Layer.extend({
                 }
                 this.cachePool.push(this.flyPool.splice(i, 1)[0]);
             }
-
         }
 
         //遍历切中水果飞行器中的水果
@@ -341,6 +343,19 @@ var GameLayer = cc.Layer.extend({
         this.addChild(this.knife);
         this.init();
     },
+    boomLight: function(fruit) {
+        if (this.scene.boomLayer == null ) {
+            this.scene.boomLayer = new LightLayer(fruit, this.scene)
+            // this.addChild(this.testLayer)
+            this.scene.addChild(this.scene.boomLayer, 1);
+            this.unscheduleUpdate();
+            Sound.playBoom();
+        }
+        // else {
+        //     this.scene.boomLayer._init();
+        // }
+
+    },
     over: function (isFailed) {
         if (!isFailed) {
             return;
@@ -353,6 +368,9 @@ var GameLayer = cc.Layer.extend({
         this.ui._init();
         this.scene.removeChild(this, true);
         this.scene.removeChild(this.ui, true);
+        this.scene.removeChild(this.scene.boomLayer, true);
+        console.log(this.scene);
+        this.scene.boomLayer = null
         if (!this.scene.overLayer) {
             this.scene.overLayer = new OverLayer(this.scene);
         }

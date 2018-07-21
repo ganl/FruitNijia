@@ -25,8 +25,11 @@ var LightLayer = cc.Layer.extend({
     count: 0,
     lighs: [],
     idx: [],
-    ctor: function (boom) {
+    scene:null,
+    ctor: function (boom, scene) {
         this._super();
+
+        this.scene = scene;
 
         for(var i = 0; i < this.lightsNum; i ++) {
             this.indexs[i] = i;
@@ -37,7 +40,16 @@ var LightLayer = cc.Layer.extend({
         this.bx = boom.x || cc.winSize.width / 2
         this.by = boom.y || cc.winSize.height / 2
     },
-
+    _init: function() {
+        this.removeAllChildren(true);
+        this.bx = 0;
+        this.by = 0;
+        this.lightsNum = 10;
+        this.indexs = [];
+        this.count = 0;
+        this.lighs = [];
+        this.idx = [];
+    },
     onEnter: function () {
         this._super();
         this.schedule(this.dl, 0.1, this.lightsNum, 0.1) // repeat + 1 times
@@ -52,10 +64,9 @@ var LightLayer = cc.Layer.extend({
     },
     dl: function () {
         if (this.count>=10){ // 最后一次画mask
-            this.schedule(this.drawMask, 1, 1, 0.2)
+            this.scheduleOnce(this.drawMask, 0.5, 'mask')
             return ;
         }
-        console.log('dl', this.count)
         this.drawLight(this.bx, this.by, this.idx[this.count++])
     },
     drawMask: function() {
@@ -65,10 +76,13 @@ var LightLayer = cc.Layer.extend({
         drawNode.drawRect(cc.p(0,0),cc.p(cc.winSize.width, cc.winSize.height), cc.color(255, 255, 255, 200), 1, cc.color(255,255,255));
         //加入Layer层
         this.addChild(drawNode);
+        this.scheduleOnce(this.game_over, 1.2, 'game_over');
+    },
+    game_over: function() {
+        this.scene.gameLayer.over(true)
     },
     drawLight: function (x, y, r) {
         var a1, a2, x1, y1, x2, y2;
-        console.log('d', this.count, r);
         var pi = Math.PI;
         var sin = Math.sin;
         var cos = Math.cos;
